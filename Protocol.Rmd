@@ -1,0 +1,398 @@
+---
+title: "| RESEARCH PROTOCOL\n| \n| Study Repo Template \n"
+fontsize: 12pt
+geometry: margin=1in
+output:
+  bookdown::html_document2:
+    df_print: paged
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    number_sections: yes
+    number_tables: yes
+    css: style.css
+  word_document:
+    reference_docx: ohdsi-protocol-style.docx
+  bookdown::pdf_document2:
+    keep_tex: yes
+    latex_engine: xelatex
+    md_extensions: +raw_attribute
+    number_sections: yes
+    includes:
+      before_body: title.tex
+header-includes:
+- \usepackage[numbers,sort&compress]{natbib}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{caption}
+- \usepackage{rotating}
+- \usepackage{multirow}
+- \usepackage{mwe,tikz}
+- \usepackage[percent]{overpic}
+- \usepackage{enumitem}
+- \usepackage{hyperref}
+- \newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+- \newcommand{\footerDate}{`r params$date`}
+- \input{header.tex}
+longtable: yes
+mainfont: Arial
+bibliography: Protocol.bib
+params:
+  date: '28-Mar-2023'
+  version: 0.0.1
+subtitle: 'Version: `r params$version`'
+link-citations: yes
+csl: bmj.csl
+---
+
+# List of Abbreviations
+
+```{r abbreviations, echo=FALSE}
+abbreviations <- readr::read_delim(col_names = FALSE, delim = ";", trim_ws = TRUE, file = "
+  CDM; Common data model
+")
+tab <- kable(abbreviations, col.names = NULL, linesep = "", booktabs = TRUE)
+if (knitr::is_latex_output()) {
+  tab %>% kable_styling(latex_options = c("striped", "hold_position"), 
+                        font_size = latex_table_font_size)
+} else {
+  tab %>% kable_styling(bootstrap_options = "striped")
+}
+```
+
+\clearpage
+
+# Responsible Parties
+
+## Investigators
+
+```{r parties, echo=FALSE}
+parties <- readr::read_delim(col_names = TRUE, delim = ";", trim_ws = TRUE, file = "
+  Investigator; Institution/Affiliation
+  Joe Bruin *; Department of Biostatistics, University of California, Los Angeles, Los Angeles, CA, USA
+")
+tab <- kable(parties, booktabs = TRUE, linesep = "") %>%
+  column_spec(1, width = "10em") %>%
+  column_spec(2, width = "35em") %>%
+  footnote(general = "* Principal Investigator", general_title = "")
+if (knitr::is_latex_output()) {
+  tab %>% kable_styling(latex_options = c("striped", "hold_position"),
+                        font_size = latex_table_font_size)
+} else {
+  tab %>% kable_styling(bootstrap_options = "striped")
+}
+```
+
+## Disclosures
+
+This study is undertaken within Observational Health Data Sciences and Informatics (OHDSI), an open collaboration.
+**JB** is a fictional character.
+
+\clearpage
+
+# Abstract
+
+This study will describe the incidence and time-to event of aortic aneurysm and aortic dissections following exposure to fluoroquinolone antibiotics. The study will also draw comparisons between fluoroquinolone antibiotics and other antibiotics used to treat the same infection and risk of aortic outcomes. A risk prediction model will also be developed to determine the probability that a patient will go on to have an aortic aneurysm or dissection following exposure to a fluoroquinolone antibiotic.   
+
+**Background and Significance**: 
+
+Fluoroquinolone antibiotics are a broad-spectrum class of antibiotics which are used to treat urinary tract infections, pneumonia, gastroenteritis, epididmyo-orchitis, prostatitis or bone and joint infections.  Fluoroquinolone use is rising internationally; approximately 7.81 billion doses of fluoroquinolones have been administered over the last decade. Whilst fluoroquinolone antibiotics are generally well tolerated, neurological and cardiovascular adverse events have been identified in post-market surveillance studies. Additionally in rare cases (0.1-1%), use of fluoroquinolones has been associated with risk of aortic aneurysm or dissection. The pharmacological mechanism between fluoroquinolone use and aortic aneurysm or dissection occurrence is not fully understood. However, the pathogenesis of this adverse event appears to involve extracellular matrix degradation in the aorta mediated by matrix metalloproteinases, dysfunction and apoptosis of vascular smooth muscle cells in the aorta and also increased concentrations of pro-inflammatory cytokines at the site contributing to remodelling of the aorta.  
+
+Subsequent to post-market surveillance, international medicine regulators including the Therapeutic Goods Administration (TGA) in Australia have released warnings, including black box warnings, detailing the risk of aortic dissections and aneurysms when fluoroquinolones are used. Whilst there have been numerous warnings from regulators about the association of quinolone antibiotics with risk of aortic aneurysms or dissections, the quality of the evidence underpinning this association is moderate. The most recent meta-analysis of four observational studies found that people who used fluoroquinolone antibiotics were at an increased risk of aortic diseases compared to those who used other antibiotics (adjusted odds ratio 2.10; 95% CI 1.65-2.68)(1) and other studies have shown that risk of aortic dissection appears highest within 30 days of taking a fluoroquinolone and the risk remains elevated for a year(2).  As far as we are aware, a data-driven individual patient-level prediction model estimating the probability of aortic aneurysm or dissection in those initiated on fluroquinolones has not been previously examined. 
+
+**Study Aims**: 
+
+This study is a multinational cohort study which: 
+
+A. Characterizes the incidence and time-to event of aortic events following fluoroquinolone exposure 
+
+B. Estimates the comparative safety of quinolones vs other antibiotics; comparative safety between fluoroquinolones 
+
+C. Designs a risk prediction model to predict the probability that a patient will experience aortic aneurysm or aortic dissection following exposure to a fluoroquinolone antibiotic.  
+
+**Study Description**: 
+
+* **Population**: 
+
+* **Comparators**:
+  
+* **Outcomes**:
+  
+* **Design**: 
+
+* **Timeframe**: 
+
+\clearpage
+
+# Amendments and Updates
+
+```{r amendments, echo=FALSE}
+amendments <- readr::read_delim(col_names = TRUE, delim = ";", trim_ws = TRUE, file = "
+  Number; Date; Section of study protocol; Amendment or update; Reason
+")
+tab <- kable(amendments, booktabs = TRUE, linesep = "")
+if (knitr::is_latex_output()) {
+  tab %>% kable_styling(latex_options = c("striped", "hold_position"), font_size = latex_table_font_size)
+} else {
+  tab %>% kable_styling(bootstrap_options = "striped")
+}
+```
+
+# Milestones
+
+```{r dates, echo=FALSE}
+dates <- readr::read_delim(col_names = TRUE, delim = ";", trim_ws = TRUE, file = "
+  Milestone; Planned / actual date
+")
+tab <- kable(dates, booktabs = TRUE, linesep = "")
+if (knitr::is_latex_output()) {
+  tab %>% kable_styling(latex_options = c("striped", "hold_position"), font_size = latex_table_font_size)
+} else {
+  tab %>% kable_styling(bootstrap_options = "striped")
+}
+```
+
+# Rationale and Background
+
+# Study Objectives
+
+# Research Methods
+
+## Study Design
+
+This study uses `CohortMethod` [@Schuemie2020-fa].
+
+## Data Sources
+
+The study will be conducted using data from real world data sources that have been mapped to the OMOP Common Data Model in collaboration with the Observational Health Data Sciences and Informatics (OHDSI) and European Health Data and Evidence Network (EHDEN) initiatives. The OMOP Common Data Model (https://ohdsi.github.io/CommonDataModel/) includes a standard representation of health care trajectories (such as information related to drug utilization and condition occurrence), as well as common vocabularies for coding clinical concepts, and enables consistent application of analyses across multiple disparate data sources (Voss et al., 2015). 
+
+We intend to study data with different data source provenance (e.g., electronic medical records, insurance claims) as well data representing different populations (privately insured employees or patients with limited income) and geographies. This study will be run on datasets that have been converted to the Observational Medical Outcomes Partnership (OMOP) Common Data Model (CDM) 
+
+We intend to study data with different data source provenance (e.g., electronic medical records, insurance claims) as well data representing different populations (privately insured employees or patients with limited income) and geographies. This study will be run on datasets that have been converted to the Observational Medical Outcomes Partnership (OMOP) Common Data Model (CDM) 
+
+## Study Population
+
+The study is an observational cohort study based on routinely-collected health care data which has been mapped to the Observational Medical Outcomes Partnership (OMOP) Common Data Model (CDM). Two cohorts will be identified:  
+
+1. people diagnosed with community acquired pneumonia  
+
+2. people diagnosed with urinary tract infection.  
+
+Patients within each cohort will further be separated by treatment in an outpatient setting or hospital setting and by prescription of fluoroquinolone antibiotic or active comparator.  
+
+Treatment cohort: people taking fluoroquinolones.  
+
+Specifically new users of fluoroquinolones (in outpatient or inpatient setting).  
+
+Comparator cohort: new users of active comparator antibiotics (see table below).  
+
+For both groups we restrict to people with (1) Community Acquired Pneumonia or (2) Urinary Tract Infection, two of the main indications for the treatment of interest. The outcome is aortic aneurysm or aortic dissection.  
+
+Study population: all subjects in the database will be included who meet the following criteria (note the index date is the start of the first exposure to fluoroquinolone or active comparator): 
+
+First ever exposure to fluoroquinolone or active comparator 
+
+At least 365 days of observation time prior to the index date 
+
+Hospital or outpatient diagnosis of CAP or UTI on or preceding the index date (1 week? Note Newton study: consider up to 30 days prior to 7 days post as well)  
+
+No diagnosis of aortic aneurysm or dissection preceding the index date (note: consider not excluding people who have only had aortic aneurysm prior as these may go on to have rupture with quinolone exposure)  
+
+We will limit patients to those aged 35 years or older (for discussion as per JAMA newton paper fluoroquinolone use with short-term risk of development of aortic aneurysm; or limit to over 50s) 
+
+Community acquired pneumonia (CAP) cohort 
+
+Concept set: pneumonia OHDSI concept ID 255848, 257315 (athena) (concept code for acute pneumonia as per phenotype library as we’ve defined inclusion criteria) 
+
+Target Cohort #1: Persons with first ever community acquired pneumoniaCAP prescribed fluoroquinolone in outpatient setting have: 
+
+≥1 record of CAP diagnosis in outpatient setting and ≥1 prescription for fluoroquinolone antibiotics 
+
+ 
+
+Target Cohort #2: Persons with first ever community acquired pneumoniaCAP taking an active comparator antibiotic in outpatient setting 
+
+≥1 record of CAP diagnosis in outpatient setting and ≥1 prescription for active comparator medications 
+
+ 
+
+Target Cohort #3: Persons with first ever CAP prescribed fluoroquinolone in hospital setting have:  
+
+≥1 record of CAP diagnosis in hospital setting and ≥1 prescription for fluoroquinolone antibiotics 
+
+ 
+
+Target Cohort #4: Persons with first ever community acquired pneumoniaCAP taking an active comparator antibiotic in hospital setting 
+
+≥1 record of CAP diagnosis in hospital setting and ≥1 prescription for active comparator medications 
+
+ 
+
+Urinary tract infection (UTI) cohort 
+
+Concept set: acute UTI OHDSI concept ID 4331815 (athena), (concept code for UTI as per phenotype library as we’ve defined inclusion criteria) 
+
+ 
+
+Target Cohort #1: Persons with first ever urinary tract infectionUTI prescribed fluoroquinolone in outpatient setting have: 
+
+≥1 record of UTI diagnosis in outpatient setting and ≥1 prescription for fluoroquinolone antibiotics 
+
+ 
+
+Target Cohort #2: Persons with first ever urinary tract infectionUTI taking an active comparator antibiotic in outpatient setting 
+
+≥1 record of UTI diagnosis in outpatient setting and ≥1 prescription for active comparator medications 
+
+ 
+
+Target Cohort #3: Persons with first ever UTI prescribed fluoroquinolone in hospital setting have:  
+
+≥1 record of UTI diagnosis in hospital setting and ≥1 prescription for fluoroquinolone antibiotics 
+
+ 
+
+Target Cohort #4: Persons with first ever UTI taking an active comparator antibiotic in hospital setting 
+
+≥1 record of UTI diagnosis in hospital setting and ≥1 prescription for active comparator medications 
+
+
+## Exposure Comparators
+
+## Outcomes {#outcomes}
+
+The outcome is first occurrence of either:   
+
+Aortic aneurysm:  
+
+Index rule defining the index date:  
+
+Any hospitalization with diagnosis code of aortic aneurysm as primary or secondary diagnosis (query: do we also require an MRI in hospital?) 
+
+Athena concept code: 317585 (athena OHDSI) but not some descendants (need to check which to exclude) 
+
+Inclusion rules based on the index date: 
+
+Cannot have an aortic aneurysm diagnosis or dissection code prior to the index date
+
+Aortic dissection:  
+
+Index rule defining the index date:  
+
+Any hospitalization with diagnosis code of aortic dissection as primary or secondary diagnosis (query: do we also require an MRI in hospital?) 
+
+Athena concept code: 320739 (athena OHDSI) but not some descendants (need to check which to exclude) 
+
+
+Inclusion rules based on the index date: 
+
+Cannot have an aortic dissection diagnosis (note: it’s ok if they’ve had an aortic aneurysm first) code prior to the index date  
+ 
+
+Positive outcome controls:  
+
+injury of achilles tendon and achilles tendinitis (need athena concept code for these) 
+
+## Analysis
+
+Characterizing the cohort:  
+
+All analyses will be performed using code developed for the OHDSI Methods library. The code for this study can be found at A diagnostic package, built off the OHDSI Cohort Diagnostics library, is included in the base package as a preliminary step to assess the fitness of use of phenotypes on your database. If a database passes cohort diagnostics, the full study package will be executed. Baseline covariates will be extracted using an optimized SQL extraction script based on principles of the Feature Extraction package () to quantify Demographics (Gender, Prior Observation Time, Age Group), Condition Group Eras and Drug Group Eras (at the above-listed time windows). Additional cohort-specific covariates will be constructed using OMOP standard vocabulary concepts. 
+
+ 
+
+Number and proportion of persons with feature variables during time-at-risk windows will be reported by target cohort and specific stratifications. Standardized mean differences (SMD) will be calculated when comparing characteristics of study cohorts, with plots comparing the mean values of characteristics for each of the features (with the color indicating the absolute value of the standardized difference of the mean). 
+
+ 
+
+Population-level estimation:  
+
+Proportional hazard models will be used to assess the hazard ratios between the two exposure cohorts for each condition of interest and for each setting.  
+
+Adjustment for baseline confounders will be done using propensity scores. (to be discussed) First a propensity model will be fitted and used to create propensity scores (PS). These PS will be used ot match the treatment and comparator cohorts, and the proportional hazards outcome models will be conditioned on the matched sets of strata respectively.  
+
+Self-controlled case series? (to be discussed) 
+
+The analysis will be performed as an intention to treat where exposure is considered from index date until end of the observation (until the occurrence of outcome, death or end of study).  
+
+Negative controls: to be decided. Outcomes not believed to be caused by FQs or active comparator medicines will also be included. The hazard ratios computed for these negative controls will be used to evaluate residual bias and compute calibrated p-values for the outcomes of interest.  
+
+ 
+
+Descriptive analysis  
+
+Demographic and clinical characteristics: pre matching and post matched (with   
+
+Primary analysis : 
+
+UTI: Outpatient: FQ initiation and risk of first ever AA/AD compared to outpatient initiated active comparator and risk of first ever AA/AD 
+
+UTI: Inpatient: FQ initiation and risk of first ever AA/AD compared to inpatient initiated active comparator and risk of first ever AA/AD 
+
+Pneumonia: Outpatient: FQ initiation and risk of first ever AA/AD compared to outpatient initiated active comparator and risk of first ever AA/AD 
+
+Pneumonia: inpatient: FQ initiation and risk of first ever AA/AD compared to inpatient initiated active comparator and risk of first ever AA/AD 
+
+ 
+
+Secondary analysis:  
+
+Head-to-head comparison of individual fluoroquinolones with individual active comparators by setting and diagnosis (UTI or pneumonia)  
+
+ 
+
+Patient level prediction: 
+
+TBD.  
+
+# Sample Size and Study Power {#sample-size}
+
+# Strengths and Limitations {#strengths-limitations}
+
+# Protection of Human Subjects
+
+The study uses only de-identified data. Confidentiality of patient records will be maintained at all times. Data custodians will remain in full control of executing the analysis and packaging results. There will be no transmission of patient-level data at any time during these analyses. Only aggregate statistics will be captured. Study packages will contain minimum cell count parameters to obscure any cells which fall below allowable reportable limits. All study reports will only contain aggregated data and will not identify individual patients or physicians.  
+
+# Management and Reporting of Adverse Events and Adverse Reactions
+
+# Plans for Disseminating and Communicating Study Results
+
+\clearpage
+
+# References {-}
+
+.	Dai XC, Yang XX, Ma L, Tang GM, Pan YY, Hu HL. Relationship between fluoroquinolones and the risk of aortic diseases: a meta-analysis of observational studies. BMC Cardiovasc Disord. 2020;20(1):49. 
+
+2.	Yu X, Jiang DS, Wang J, Wang R, Chen T, Wang K, Cao S, Wei X. Fluoroquinolone Use and the Risk of Collagen-Associated Adverse Events: A Systematic Review and Meta-Analysis. Drug Saf. 2019;42(9):1025-1033. 
+
+<div id="refs"></div>
+
+\clearpage
+
+\centerline{\Huge Appendix}
+
+# (APPENDIX) Appendix {-}
+
+# Exposure Cohort Definitions
+
+```{r appendix,  echo=FALSE, results="asis", warning=FALSE, message=FALSE}
+source("https://raw.githubusercontent.com/ohdsi-studies/LegendT2dm/master/R/PrettyOutput.R")
+printCohortDefinitionFromNameAndJson(name = "Template Cohort (New-users of DDP4 inhibitors)",
+                                     json = SqlRender::readSql("templateCohort.json"),
+                                     withConcepts = TRUE)
+```
+
+# Outcome Cohort Definitions
+
+# Negative Control Concepts {#negative-controls}
