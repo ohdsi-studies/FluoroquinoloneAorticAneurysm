@@ -1,5 +1,5 @@
 ---
-title: "| RESEARCH PROTOCOL\n| \n| Study Repo Template \n"
+title: "Is fluoroquinolone use associated with the development of aortic aneurysms and aortic dissections"
 fontsize: 12pt
 geometry: margin=1in
 output:
@@ -56,13 +56,34 @@ link-citations: yes
 csl: bmj.csl
 ---
 
+```{r setup, include=FALSE}
+# library(LegendT2dm)
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
+options(kableExtra.latex.load_packages = FALSE)
+library(kableExtra)
+library(dplyr)
+options(knitr.kable.NA = "")
+options(knitr.table.format = function() {
+  if (knitr::is_latex_output()) {
+    "latex"
+  } else if (knitr::is_html_output()) {
+    "html"
+  } else {
+    "pipe"
+  }
+})
+latex_table_font_size <- 8
+```
+
 # List of Abbreviations
 
 ```{r abbreviations, echo=FALSE}
 abbreviations <- readr::read_delim(col_names = FALSE, delim = ";", trim_ws = TRUE, file = "
   CDM; Common data model
-")
-tab <- kable(abbreviations, col.names = NULL, linesep = "", booktabs = TRUE)
+  CAP; Community Acquired Pneumonia
+  ",
+  show_col_types = FALSE)
+tab <- knitr::kable(abbreviations, col.names = NULL, linesep = "", booktabs = TRUE)
 if (knitr::is_latex_output()) {
   tab %>% kable_styling(latex_options = c("striped", "hold_position"), 
                         font_size = latex_table_font_size)
@@ -81,7 +102,8 @@ if (knitr::is_latex_output()) {
 parties <- readr::read_delim(col_names = TRUE, delim = ";", trim_ws = TRUE, file = "
   Investigator; Institution/Affiliation
   Joe Bruin *; Department of Biostatistics, University of California, Los Angeles, Los Angeles, CA, USA
-")
+  ",
+  show_col_types = FALSE)
 tab <- kable(parties, booktabs = TRUE, linesep = "") %>%
   column_spec(1, width = "10em") %>%
   column_spec(2, width = "35em") %>%
@@ -126,9 +148,9 @@ C. Designs a risk prediction model to predict the probability that a patient wil
 * **Population**: 
 
 * **Comparators**:
-  
+
 * **Outcomes**:
-  
+
 * **Design**: 
 
 * **Timeframe**: 
@@ -140,7 +162,8 @@ C. Designs a risk prediction model to predict the probability that a patient wil
 ```{r amendments, echo=FALSE}
 amendments <- readr::read_delim(col_names = TRUE, delim = ";", trim_ws = TRUE, file = "
   Number; Date; Section of study protocol; Amendment or update; Reason
-")
+",
+  show_col_types = FALSE)
 tab <- kable(amendments, booktabs = TRUE, linesep = "")
 if (knitr::is_latex_output()) {
   tab %>% kable_styling(latex_options = c("striped", "hold_position"), font_size = latex_table_font_size)
@@ -154,7 +177,8 @@ if (knitr::is_latex_output()) {
 ```{r dates, echo=FALSE}
 dates <- readr::read_delim(col_names = TRUE, delim = ";", trim_ws = TRUE, file = "
   Milestone; Planned / actual date
-")
+",
+  show_col_types = FALSE)
 tab <- kable(dates, booktabs = TRUE, linesep = "")
 if (knitr::is_latex_output()) {
   tab %>% kable_styling(latex_options = c("striped", "hold_position"), font_size = latex_table_font_size)
@@ -219,49 +243,49 @@ Target Cohort #1: Persons with first ever community acquired pneumoniaCAP prescr
 
 ≥1 record of CAP diagnosis in outpatient setting and ≥1 prescription for fluoroquinolone antibiotics 
 
- 
+
 
 Target Cohort #2: Persons with first ever community acquired pneumoniaCAP taking an active comparator antibiotic in outpatient setting 
 
 ≥1 record of CAP diagnosis in outpatient setting and ≥1 prescription for active comparator medications 
 
- 
+
 
 Target Cohort #3: Persons with first ever CAP prescribed fluoroquinolone in hospital setting have:  
 
 ≥1 record of CAP diagnosis in hospital setting and ≥1 prescription for fluoroquinolone antibiotics 
 
- 
+
 
 Target Cohort #4: Persons with first ever community acquired pneumoniaCAP taking an active comparator antibiotic in hospital setting 
 
 ≥1 record of CAP diagnosis in hospital setting and ≥1 prescription for active comparator medications 
 
- 
+
 
 Urinary tract infection (UTI) cohort 
 
 Concept set: acute UTI OHDSI concept ID 4331815 (athena), (concept code for UTI as per phenotype library as we’ve defined inclusion criteria) 
 
- 
+
 
 Target Cohort #1: Persons with first ever urinary tract infectionUTI prescribed fluoroquinolone in outpatient setting have: 
 
 ≥1 record of UTI diagnosis in outpatient setting and ≥1 prescription for fluoroquinolone antibiotics 
 
- 
+
 
 Target Cohort #2: Persons with first ever urinary tract infectionUTI taking an active comparator antibiotic in outpatient setting 
 
 ≥1 record of UTI diagnosis in outpatient setting and ≥1 prescription for active comparator medications 
 
- 
+
 
 Target Cohort #3: Persons with first ever UTI prescribed fluoroquinolone in hospital setting have:  
 
 ≥1 record of UTI diagnosis in hospital setting and ≥1 prescription for fluoroquinolone antibiotics 
 
- 
+
 
 Target Cohort #4: Persons with first ever UTI taking an active comparator antibiotic in hospital setting 
 
@@ -298,7 +322,7 @@ Athena concept code: 320739 (athena OHDSI) but not some descendants (need to che
 Inclusion rules based on the index date: 
 
 Cannot have an aortic dissection diagnosis (note: it’s ok if they’ve had an aortic aneurysm first) code prior to the index date  
- 
+
 
 Positive outcome controls:  
 
@@ -310,11 +334,11 @@ Characterizing the cohort:
 
 All analyses will be performed using code developed for the OHDSI Methods library. The code for this study can be found at A diagnostic package, built off the OHDSI Cohort Diagnostics library, is included in the base package as a preliminary step to assess the fitness of use of phenotypes on your database. If a database passes cohort diagnostics, the full study package will be executed. Baseline covariates will be extracted using an optimized SQL extraction script based on principles of the Feature Extraction package () to quantify Demographics (Gender, Prior Observation Time, Age Group), Condition Group Eras and Drug Group Eras (at the above-listed time windows). Additional cohort-specific covariates will be constructed using OMOP standard vocabulary concepts. 
 
- 
+
 
 Number and proportion of persons with feature variables during time-at-risk windows will be reported by target cohort and specific stratifications. Standardized mean differences (SMD) will be calculated when comparing characteristics of study cohorts, with plots comparing the mean values of characteristics for each of the features (with the color indicating the absolute value of the standardized difference of the mean). 
 
- 
+
 
 Population-level estimation:  
 
@@ -328,7 +352,7 @@ The analysis will be performed as an intention to treat where exposure is consid
 
 Negative controls: to be decided. Outcomes not believed to be caused by FQs or active comparator medicines will also be included. The hazard ratios computed for these negative controls will be used to evaluate residual bias and compute calibrated p-values for the outcomes of interest.  
 
- 
+
 
 Descriptive analysis  
 
@@ -344,13 +368,13 @@ Pneumonia: Outpatient: FQ initiation and risk of first ever AA/AD compared to ou
 
 Pneumonia: inpatient: FQ initiation and risk of first ever AA/AD compared to inpatient initiated active comparator and risk of first ever AA/AD 
 
- 
+
 
 Secondary analysis:  
 
 Head-to-head comparison of individual fluoroquinolones with individual active comparators by setting and diagnosis (UTI or pneumonia)  
 
- 
+
 
 Patient level prediction: 
 
@@ -387,10 +411,10 @@ The study uses only de-identified data. Confidentiality of patient records will 
 # Exposure Cohort Definitions
 
 ```{r appendix,  echo=FALSE, results="asis", warning=FALSE, message=FALSE}
-source("https://raw.githubusercontent.com/ohdsi-studies/LegendT2dm/master/R/PrettyOutput.R")
-printCohortDefinitionFromNameAndJson(name = "Template Cohort (New-users of DDP4 inhibitors)",
-                                     json = SqlRender::readSql("templateCohort.json"),
-                                     withConcepts = TRUE)
+# source("https://raw.githubusercontent.com/ohdsi-studies/LegendT2dm/master/R/PrettyOutput.R")
+# printCohortDefinitionFromNameAndJson(name = "Template Cohort (New-users of DDP4 inhibitors)",
+#                                      json = SqlRender::readSql("templateCohort.json"),
+#                                      withConcepts = TRUE)
 ```
 
 # Outcome Cohort Definitions
