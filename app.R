@@ -1,6 +1,7 @@
 # View Strategus results in the results database
 # remotes::install_github("ohdsi/ShinyAppBuilder", ref = "develop")
 # remotes::install_github("ohdsi/OhdsiShinyModules", ref = "develop")
+# remotes::install_github("ohdsi/ResultModelManager")
 
 library(dplyr)
 library(ShinyAppBuilder)
