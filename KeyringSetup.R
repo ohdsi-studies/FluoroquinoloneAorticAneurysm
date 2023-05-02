@@ -1,22 +1,22 @@
 # Install keyring - one time operation ---------
-#install.packages("keyring")
+install.packages("keyring")
+
+if (Sys.getenv("STRATEGUS_KEYRING_PASSWORD") == "") {
+  # set keyring password by adding STRATEGUS_KEYRING_PASSWORD='sos' to renviron
+  usethis::edit_r_environ()
+  # then add STRATEGUS_KEYRING_PASSWORD='sos', save and close
+  # Restart your R Session to confirm it worked
+  stop("Please add STRATEGUS_KEYRING_PASSWORD='sos' to your .Renviron file 
+       via usethis::edit_r_environ() as instructed, save and then restart R session")
+}
 
 # Provide your environment specific values ------
 dbms <- "redshift"
-cdmConnectionString <- "jdbc:redshift://your.server.goes.here:5439/your_cdm_database"
+connectionString <- "jdbc:redshift://your.server.goes.here:5439/your_cdm_database"
 username <- "username-goes-here"
 password = "password-goes-here"
 
-# Set the Strategus keyring environment password
-# running usethis::edit_r_environ(), then add
-# this line to your file:
-# 
-# STRATEGUS_KEYRING_PASSWORD='sos'
-#
-# Restart your R Session to confirm it worked
-if (Sys.getenv("STRATEGUS_KEYRING_PASSWORD") == "") {
-  stop("Please set your .Renviron file up as instructed.")
-}
+
 
 # Run the rest to setup keyring ----------
 ##################################
@@ -46,13 +46,13 @@ keyring::keyring_create(keyring = keyringName, password = keyringPassword)
 
 # Store the the user-specific configuration -----
 keyring::key_set_with_value("dbms", password = dbms, keyring = keyringName)
-keyring::key_set_with_value("cdmConnectionString", password = cdmConnectionString, keyring = keyringName)
+keyring::key_set_with_value("connectionString", password = connectionString, keyring = keyringName)
 keyring::key_set_with_value("username", password = username, keyring = keyringName)
 keyring::key_set_with_value("password", password = password, keyring = keyringName)
 
 # Print the values to confirm the configuration
 message("Keyring values set as:")
-keys <- c("dbms", "cdmConnectionString", "username", "password")
+keys <- c("dbms", "connectionString", "username", "password")
 for (i in seq_along(keys)) {
   message(paste0(" - ", keys[i], ": ", keyring::key_get(keys[i], keyring = keyringName)))
 }
