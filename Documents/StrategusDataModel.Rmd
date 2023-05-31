@@ -1,0 +1,184 @@
+---
+title: "| OPERATIONS MANUAL\n| \n| Strategus Data Model\n| \n| \n"
+author: "Marc A. Suchard"
+fontsize: 12pt
+geometry: margin=1in
+output:
+  bookdown::html_document2:
+    df_print: paged
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    number_sections: yes
+    number_tables: yes
+    highlight: pygments
+    css: "style.css"
+  bookdown::pdf_document2:
+    keep_tex: yes
+    latex_engine: xelatex
+    md_extensions: +raw_attribute
+    number_sections: yes
+    # citation_package: natbib
+    includes:
+      before_body: title.tex
+header-includes:
+- \usepackage[numbers,sort&compress]{natbib}
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{caption}
+- \usepackage{rotating}
+- \usepackage{multirow}
+- \usepackage{mwe,tikz}
+- \usepackage[percent]{overpic}
+- \usepackage{enumitem}
+- \usepackage{hyperref}
+- \newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+- \newcommand{\footerDate}{`r params$date`}
+- \input{header.tex}
+longtable: yes
+mainfont: Arial
+bibliography: Protocol.bib
+params:
+  date: '2023-06-01'
+  version: 0.0.99
+subtitle: 'Version: `r params$version`'
+link-citations: true
+csl: bmj.csl
+---
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(knitr)
+library(dplyr)
+library(kableExtra)
+```
+
+# Access and schema
+
+This document describes the data models for `Strategus` modules and some instructions on how to access results in these models.
+We hold results on the OHDSI public database server `shinydb` that runs `postgresql`.
+You can install the `postgresql` JDBC drivers; this only needs to be done once.
+
+It is recommend to specify the environmental variable `DATABASECONNECT_JAR_FOLDER=<folder-of-your-choice>` in `.Renviron` located in the user's home directory.
+In the example below, however, we set the environmental variable manually in `R` to make this document more self-contained.
+
+```{r db, eval=FALSE}
+Sys.setenv(DATABASECONNECTOR_JAR_FOLDER = ".")
+DatabaseConnector::downloadJdbcDrivers(dbms = "postgresql")
+```
+
+and set-up connection details, in this case using `keyring` to hide usernames and passwords for security`
+
+```{r connect, eval=FALSE}
+# OHDSI shinydb read-only credentials
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = "postgresql",
+  server = paste(keyring::key_get("shindyDbServer"),
+                 "shinydb",
+                 sep = "/"),
+  user = keyring::key_get("sosFqAaUser"),
+  password = keyring::key_get("sosFqAaPassword"))
+```
+
+
+Table \@ref(tab:schema) provides the `schema` names for SOS Challenge results.
+
+```{r schema, echo=FALSE, warning=FALSE}
+schema <- readr::read_delim(col_names = FALSE, delim = ";", trim_ws = TRUE, 
+                            show_col_types = FALSE,file = "
+  study1 ; ???
+  study2 ; ???
+  study3 ; ???
+  study4 ; ???
+")
+
+tab <- kable(schema, col.names = c("SOS Challenge study", "schema"),
+             linesep = "", booktabs = TRUE,
+             caption = "SOS Challenge study schema")
+
+if (knitr::is_latex_output()) {
+  tab %>% kable_styling(latex_options = "striped",
+                        font_size = latex_table_font_size)
+} else {
+  tab %>% kable_styling(bootstrap_options = "striped")
+}
+```
+
+# Data models
+
+```{r echo=FALSE}
+printDataModelSpecification <- function(filename, level = "###") {
+
+  specifications <- readr::read_csv(filename, show_col_types = FALSE) 
+  
+  if ("optional" %in% names(specifications)) {
+    specifications <- specifications %>% filter(optional == "No")
+  }
+  
+  tables <- split(specifications, specifications$table_name)
+  
+  for (table in tables) {
+    header <- sprintf("%s Table %s", level, table$table_name[1])
+    
+    table <- table %>%
+      select(Field = .data$column_name, Type = .data$data_type, Key = .data$primary_key
+             # , Description = .data$description
+      ) %>%
+      kable(linesep = "", booktabs = TRUE, longtable = TRUE)
+    
+    if (knitr::is_latex_output()) {
+      writeLines("")
+      writeLines(header)
+      
+      writeLines(table %>%
+                   kable_styling(latex_options = "striped", font_size = latex_table_font_size) %>%
+                   column_spec(1, width = "10em") %>%
+                   column_spec(2, width = "5em") %>%
+                   column_spec(3, width = "3em") %>%
+                   column_spec(4, width = "16em"))
+    } else if (knitr::is_html_output()) {
+      writeLines("")
+      writeLines(header)
+      
+      writeLines(table %>%
+                   kable_styling(bootstrap_options = "striped"))
+    }
+  }
+}
+```
+
+```{r echo=FALSE, results="asis", warning=FALSE}
+modules <- readr::read_delim(col_names = TRUE, delim = ";", trim_ws = TRUE, 
+                            show_col_types = FALSE,file = "
+  name ; url
+  Characterization ; https://raw.githubusercontent.com/OHDSI/Characterization/main/inst/settings/resultsDataModelSpecification.csv
+  CohortDiagnostics ; https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/main/inst/settings/resultsDataModelSpecification.csv
+  CohortIncidence ; https://raw.githubusercontent.com/OHDSI/CohortIncidenceModule/master/resultsDataModelSpecification.csv
+  CohortMethod ; https://raw.githubusercontent.com/OHDSI/CohortMethod/main/inst/csv/resultsDataModelSpecification.csv
+  PatientLevelPrediction ; https://raw.githubusercontent.com/OHDSI/PatientLevelPrediction/main/inst/settings/resultsDataModelSpecification.csv
+")
+
+for (i in 1:nrow(modules)) {
+  cat("## ", modules[i,]$name)
+  printDataModelSpecification(filename = modules[i,]$url,
+                              level = "###")
+}
+```
+
+## Fields with minimum values
+
+Some fields contain patient counts or fractions that are easily converted to patient counts.
+To prevent identifiability, these fields are subject to a minimum value.
+When the value falls below this minimum, it is replaced with the negative value of the minimum.
+For example, if the minimum subject count is 5, and the actual count is 2, the value stored in the data model will be -5, which could be represented as '\<5' to the user.
+Note that the value 0 is permissible, as it identifies no persons.
