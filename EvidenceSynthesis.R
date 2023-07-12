@@ -17,23 +17,24 @@ resultsDatabaseSchema = keyring::key_get("fqAaStudySchema")
 outputLocation <- "D:/SosFqAa"
 # End of inputs ----------------------------------------------------------------
 
+# connection <- DatabaseConnector::connect(resultsDatabaseConnectionDetails)
 
 # Create Strategus analysis specifications -------------------------------------
 library(Strategus)
 library(dplyr)
 source("https://raw.githubusercontent.com/ohdsi/EvidenceSynthesisModule/v0.1.3/SettingsFunctions.R")
 evidenceSynthesisSourceCm <- createEvidenceSynthesisSource(sourceMethod = "CohortMethod",
-                                                         likelihoodApproximation = "adaptive grid")
-metaAnalysisCm <- createBayesianMetaAnalysis(evidenceSynthesisAnalysisId = 1,
-                                           alpha = 0.05,
-                                           evidenceSynthesisDescription = "Bayesian random-effects alpha 0.05 - adaptive grid",
-                                           evidenceSynthesisSource = evidenceSynthesisSourceCm)
-evidenceSynthesisSourceSccs <- createEvidenceSynthesisSource(sourceMethod = "SelfControlledCaseSeries",
                                                            likelihoodApproximation = "adaptive grid")
+metaAnalysisCm <- createBayesianMetaAnalysis(evidenceSynthesisAnalysisId = 1,
+                                             alpha = 0.05,
+                                             evidenceSynthesisDescription = "Bayesian random-effects alpha 0.05 - adaptive grid",
+                                             evidenceSynthesisSource = evidenceSynthesisSourceCm)
+evidenceSynthesisSourceSccs <- createEvidenceSynthesisSource(sourceMethod = "SelfControlledCaseSeries",
+                                                             likelihoodApproximation = "adaptive grid")
 metaAnalysisSccs <- createBayesianMetaAnalysis(evidenceSynthesisAnalysisId = 2,
-                                           alpha = 0.05,
-                                           evidenceSynthesisDescription = "Bayesian random-effects alpha 0.05 - adaptive grid",
-                                           evidenceSynthesisSource = evidenceSynthesisSourceSccs)
+                                               alpha = 0.05,
+                                               evidenceSynthesisDescription = "Bayesian random-effects alpha 0.05 - adaptive grid",
+                                               evidenceSynthesisSource = evidenceSynthesisSourceSccs)
 evidenceSynthesisAnalysisList <- list(metaAnalysisCm, metaAnalysisSccs)
 evidenceSynthesisAnalysisSpecifications <- createEvidenceSynthesisModuleSpecifications(evidenceSynthesisAnalysisList)
 analysisSpecifications <- createEmptyAnalysisSpecificiations() %>%
@@ -90,4 +91,179 @@ ResultModelManager::uploadResults(
   specifications = specification
 )
 
+# Grand read access to read-only account
+sql <- "GRANT SELECT ON ALL TABLES IN SCHEMA @schema TO @user;"
+DatabaseConnector::renderTranslateExecuteSql(
+  connection = connection,
+  sql = sql,
+  schema = resultsDatabaseSchema,
+  user = Sys.getenv('quinoloneaadbUser')
+)
+
+# Martijn's OCD: change cohort names to something readable
+# Severe OCD: Create backup
+# DatabaseConnector::renderTranslateExecuteSql(
+#   connection = connection,
+#   sql = "SELECT * INTO @schema.cgcd_backup FROM @schema.cg_cohort_definition;",
+#   schema = resultsDatabaseSchema)
+cgCohortDefinition <- DatabaseConnector::renderTranslateQuerySql(
+  connection = connection,
+  sql = "SELECT * FROM @schema.cg_cohort_definition;",
+  schema = resultsDatabaseSchema,
+  snakeCaseToCamelCase = TRUE)
+cgCohortDefinition$cohortName <- gsub("\\[SOS .*\\] ", "", cgCohortDefinition$cohortName)
+cgCohortDefinition$cohortName <- gsub("trimethoprim", "Trimethoprim", cgCohortDefinition$cohortName)
+cgCohortDefinition$cohortName <- gsub(" - .*$", "", cgCohortDefinition$cohortName)
+cgCohortDefinition$cohortName <- gsub("urinary tract infection", "UTI", cgCohortDefinition$cohortName)
+DatabaseConnector::insertTable(
+  connection = connection,
+  databaseSchema = resultsDatabaseSchema,
+  tableName = "cg_cohort_definition",
+  data = cgCohortDefinition,
+  dropTableIfExists = TRUE,
+  createTable = TRUE,
+  camelCaseToSnakeCase = TRUE
+)
 DatabaseConnector::disconnect(connection)
+
+# Use local SQLite and Shiny app -----------------------------------------------
+library(dplyr)
+localConnectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = "sqlite",
+  server = "d:/temp/fq.sqlite"
+)
+localDatabaseSchema <- "main"
+
+localConnection <- DatabaseConnector::connect(localConnectionDetails)
+
+# Copy existing tables from Shiny DB
+connection <- DatabaseConnector::connect(resultsDatabaseConnectionDetails)
+tables <- DatabaseConnector::getTableNames(connection, resultsDatabaseSchema)
+tables <- tables[grepl("cg_", tables) | 
+                   grepl("cm_", tables) |
+                   grepl("sccs_", tables) |
+                   tables == "database_meta_data"]
+for (table in tables) {
+  message(sprintf("Copying table %s", table))
+  data <- DatabaseConnector::renderTranslateQuerySql(
+    connection = connection,
+    sql = "SELECT * FROM @schema.@table;",
+    schema = resultsDatabaseSchema,
+    table = table)
+  DatabaseConnector::insertTable(
+    connection = localConnection,
+    databaseSchema = localDatabaseSchema,
+    tableName = table,
+    data = data,
+    dropTableIfExists = TRUE,
+    createTable = TRUE)
+}
+
+# Create tables
+resultsFolder <- file.path(outputLocation, "results", "EvidenceSynthesisModule_1")
+rdmsFile <- file.path(resultsFolder, "resultsDataModelSpecification.csv")
+specification <- readr::read_csv(file = rdmsFile, show_col_types = FALSE) %>%
+  SqlRender::snakeCaseToCamelCaseNames()
+sql <- ResultModelManager::generateSqlSchema(csvFilepath = rdmsFile)
+sql <- SqlRender::render(
+  sql = sql,
+  database_schema = localDatabaseSchema
+)
+DatabaseConnector::executeSql(localConnection, sql)
+
+# Upload results
+ResultModelManager::uploadResults(
+  connection = localConnection,
+  schema = localDatabaseSchema,
+  resultsFolder = resultsFolder,
+  purgeSiteDataBeforeUploading = F,
+  specifications = specification
+)
+
+DatabaseConnector::disconnect(localConnection)
+
+# Create Shiny app and launch
+library(ShinyAppBuilder)
+resultDatabaseDetails <- list(
+  dbms = resultsDatabaseConnectionDetails$dbms,
+  tablePrefix = 'cg_',
+  cohortTablePrefix = 'cg_',
+  databaseTablePrefix = '',
+  schema = localDatabaseSchema,
+  databaseTable = 'DATABASE_META_DATA'
+)
+cohortGeneratorModule <- createDefaultCohortGeneratorConfig(
+  resultDatabaseDetails = resultDatabaseDetails,
+  useKeyring = FALSE
+)
+
+
+# Specify cohort method module
+resultDatabaseDetails <- list(
+  dbms = localConnectionDetails$dbms,
+  tablePrefix = 'cm_',
+  cohortTablePrefix = 'cg_',
+  databaseTablePrefix = '',
+  schema = localDatabaseSchema,
+  databaseTable = 'DATABASE_META_DATA'
+)
+cohortMethodModule <- createDefaultEstimationConfig(
+  resultDatabaseDetails = resultDatabaseDetails,
+  useKeyring = FALSE
+)
+
+# Specify SCCS module
+resultDatabaseDetails <- list(
+  dbms = localConnectionDetails$dbms,
+  tablePrefix = 'sccs_',
+  cohortTablePrefix = 'cg_',
+  databaseTablePrefix = '',
+  schema = localDatabaseSchema,
+  databaseTable = 'DATABASE_META_DATA'
+)
+sccsModule <- createDefaultSCCSConfig(
+  resultDatabaseDetails = resultDatabaseDetails,
+  useKeyring = FALSE
+)
+
+# Specify evidence synthesis module
+resultDatabaseDetails <- list(
+  dbms = localConnectionDetails$dbms,
+  tablePrefix = 'es_',
+  cohortTablePrefix = 'cg_',
+  databaseTablePrefix = '',
+  schema = localDatabaseSchema,
+  databaseTable = 'DATABASE_META_DATA'
+)
+metaModule <- ShinyAppBuilder::createModuleConfig( 
+  moduleIcon = "object-group",#"meta",
+  moduleId = 'EvidenceSynthesis',
+  tabName = 'Meta',
+  shinyModulePackage = "OhdsiShinyModules",
+  moduleUiFunction = "evidenceSynthesisViewer",
+  moduleServerFunction = "evidenceSynthesisServer",
+  moduleDatabaseConnectionKeyUsername = 'es',
+  moduleInfoBoxFile = "evidenceSynthesisHelperFile()",
+  resultDatabaseDetails = list(
+    tablePrefix = 'es_',
+    cmTablePrefix = 'cm_',
+    cgTablePrefix = 'cg_',
+    sccsTablePrefix = 'sccs_',
+    schema = localDatabaseSchema,
+    databaseMetaData = 'DATABASE_META_DATA'
+  ),
+  useKeyring = F
+)
+
+
+# Combine module specifications
+shinyAppConfig <- initializeModuleConfig() %>%
+  addModuleConfig(aboutModule) %>%
+  addModuleConfig(cohortGeneratorModule) %>%
+  addModuleConfig(cohortMethodModule) %>%
+  addModuleConfig(sccsModule) %>%
+  addModuleConfig(metaModule)
+
+connectionHandler <- ResultModelManager::ConnectionHandler$new(localConnectionDetails)
+ShinyAppBuilder::viewShiny(shinyAppConfig, connectionHandler)
+connectionHandler$closeConnection()
