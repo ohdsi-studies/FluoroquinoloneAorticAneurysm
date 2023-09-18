@@ -22,7 +22,7 @@ outputLocation <- "D:/SosFqAa"
 # Create Strategus analysis specifications -------------------------------------
 library(Strategus)
 library(dplyr)
-source("https://raw.githubusercontent.com/ohdsi/EvidenceSynthesisModule/v0.1.3/SettingsFunctions.R")
+source("https://raw.githubusercontent.com/ohdsi/EvidenceSynthesisModule/v0.2.1/SettingsFunctions.R")
 evidenceSynthesisSourceCm <- createEvidenceSynthesisSource(sourceMethod = "CohortMethod",
                                                            likelihoodApproximation = "adaptive grid")
 metaAnalysisCm <- createBayesianMetaAnalysis(evidenceSynthesisAnalysisId = 1,
@@ -69,6 +69,19 @@ connection <- DatabaseConnector::connect(resultsDatabaseConnectionDetails)
 #   data <- DatabaseConnector::dbReadTable(connection, table, databaseSchema = resultsDatabaseSchema) 
 #   saveRDS(data, file.path(backupFolder, sprintf("%s.rds", table)))
 # }
+
+# Drop tables (if exist)
+resultsFolder <- file.path(outputLocation, "results", "EvidenceSynthesisModule_1")
+rdmsFile <- file.path(resultsFolder, "resultsDataModelSpecification.csv")
+specification <- readr::read_csv(file = rdmsFile, show_col_types = FALSE) %>%
+  SqlRender::snakeCaseToCamelCaseNames()
+tableNames <- unique(specification$tableName)
+sql <- paste(sprintf("DROP TABLE IF EXISTS @database_schema.%s;", tableNames), collapse = "\n")
+sql <- SqlRender::render(
+  sql = sql,
+  database_schema = resultsDatabaseSchema
+)
+DatabaseConnector::executeSql(connection, sql)
 
 # Create tables
 resultsFolder <- file.path(outputLocation, "results", "EvidenceSynthesisModule_1")
